@@ -491,6 +491,76 @@
             border-radius: 8px;
         }
 
+        /* ─── Batch ─── */
+        .batch-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+        }
+        .batch-panel .batch-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .batch-panel .batch-header h3 { font-size: 1.1em; }
+        .batch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .batch-pair {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+        }
+        .batch-pair .pair-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .batch-pair .pair-inputs input[type="file"] { display: none; }
+        .batch-pair .pair-inputs .pair-btn {
+            flex: 1;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px dashed var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            text-align: center;
+        }
+        .batch-pair .pair-inputs .pair-btn:hover {
+            border-color: var(--primary);
+            color: var(--text);
+        }
+        .batch-pair .pair-inputs .pair-btn.selected {
+            border-style: solid;
+            border-color: var(--success);
+            color: var(--text);
+        }
+        .batch-pair .pair-result {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .batch-pair .pair-result.done { color: var(--success); }
+        .batch-pair .pair-result.fail { color: var(--error); }
+        @media (max-width: 600px) {
+            .batch-grid { grid-template-columns: 1fr; }
+        }
+
         /* ─── Slider Compare ─── */
         .slider-compare {
             position: relative;
@@ -754,6 +824,21 @@
         </div>
     </div>
 
+    <!-- ─── Batch Compare ─── -->
+    <div class="batch-panel" id="batchPanel">
+        <div class="batch-header">
+            <div>
+                <h3>📂 Batch Compare</h3>
+                <span style="font-size:0.85em;color:var(--text-muted);">So sánh nhiều cặp ảnh cùng lúc</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="btnBatchRun">🚀 Chạy Tất Cả</button>
+                <button class="btn btn-secondary btn-sm" id="btnBatchClear">🗑️ Xoá</button>
+            </div>
+        </div>
+        <div class="batch-grid" id="batchGrid"></div>
+    </div>
+
     <!-- ─── History ─── -->
     <div class="history-panel" id="historyPanel">
         <div class="history-header">
@@ -864,6 +949,122 @@
         });
     }
     renderHistory();
+
+    // ─── Batch ───
+    const batchGrid = document.getElementById('batchGrid');
+    const btnBatchRun = document.getElementById('btnBatchRun');
+    const btnBatchClear = document.getElementById('btnBatchClear');
+    let batchPairs = [];
+    let batchIdCounter = 0;
+
+    function addBatchPair(expectedFile, actualFile) {
+        const id = ++batchIdCounter;
+        let eName = '';
+        let aName = '';
+        let eData = null;
+        let aData = null;
+
+        const div = document.createElement('div');
+        div.className = 'batch-pair';
+        div.dataset.id = id;
+
+        const createFileInput = (label, side) => {
+            const btn = document.createElement('button');
+            btn.className = 'pair-btn';
+            btn.textContent = label;
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/png,image/jpeg,image/webp';
+            btn.addEventListener('click', () => input.click());
+            input.addEventListener('change', () => {
+                if (!input.files.length) return;
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (side === 'e') { eName = file.name; eData = e.target.result; }
+                    else { aName = file.name; aData = e.target.result; }
+                    btn.textContent = (side === 'e' ? '📸 ' : '🔍 ') + file.name;
+                    btn.classList.add('selected');
+                };
+                reader.readAsDataURL(file);
+            });
+            const wrap = document.createElement('div');
+            wrap.style.flex = '1';
+            wrap.appendChild(btn);
+            wrap.appendChild(input);
+            return wrap;
+        };
+
+        const inputs = document.createElement('div');
+        inputs.className = 'pair-inputs';
+        inputs.appendChild(createFileInput('📸 Expected', 'e'));
+        inputs.appendChild(createFileInput('🔍 Actual', 'a'));
+
+        const result = document.createElement('div');
+        result.className = 'pair-result';
+        result.textContent = '⏳ Chưa sẵn sàng';
+
+        div.appendChild(inputs);
+        div.appendChild(result);
+        batchGrid.appendChild(div);
+
+        const pair = { id, div, result, getE: () => eData, getA: () => aData, getEN: () => eName, getAN: () => aName };
+        batchPairs.push(pair);
+        return pair;
+    }
+
+    // Add 4 empty pairs by default
+    for (let i = 0; i < 4; i++) addBatchPair();
+
+    btnBatchRun.addEventListener('click', async () => {
+        btnBatchRun.disabled = true;
+        btnBatchRun.textContent = '⏳ Đang xử lý...';
+        for (const pair of batchPairs) {
+            const eData = pair.getE();
+            const aData = pair.getA();
+            if (!eData || !aData) {
+                pair.result.textContent = '⏸️ Bỏ qua (thiếu ảnh)';
+                continue;
+            }
+            const img1 = await loadImage(eData);
+            const img2 = await loadImage(aData);
+            if (!img1 || !img2) {
+                pair.result.textContent = '❌ Lỗi đọc ảnh';
+                continue;
+            }
+            const w = Math.max(img1.width, img2.width);
+            const h = Math.max(img1.height, img2.height);
+            const c1 = document.createElement('canvas'); c1.width = w; c1.height = h;
+            c1.getContext('2d').drawImage(img1, 0, 0);
+            const c2 = document.createElement('canvas'); c2.width = w; c2.height = h;
+            c2.getContext('2d').drawImage(img2, 0, 0);
+            const d1 = c1.getContext('2d').getImageData(0, 0, w, h);
+            const d2 = c2.getContext('2d').getImageData(0, 0, w, h);
+            const diff = new ImageData(w, h);
+            const threshold = parseFloat(thresholdSlider.value);
+            const diffPixels = pixelmatch(d1.data, d2.data, diff.data, w, h, { threshold, diffColor: currentDiffColor });
+            const pct = ((diffPixels / (w * h)) * 100).toFixed(2);
+            pair.result.className = 'pair-result ' + (diffPixels === 0 ? 'done' : 'fail');
+            pair.result.textContent = `${diffPixels === 0 ? '✅' : '❌'} ${diffPixels.toLocaleString()} px khác (${pct}%)`;
+        }
+        btnBatchRun.disabled = false;
+        btnBatchRun.textContent = '🚀 Chạy Tất Cả';
+    });
+
+    btnBatchClear.addEventListener('click', () => {
+        batchGrid.innerHTML = '';
+        batchPairs = [];
+        for (let i = 0; i < 4; i++) addBatchPair();
+    });
+
+    function loadImage(src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = src;
+        });
+    }
 
     btnClearHistory.addEventListener('click', () => {
         if (confirm('Xoá toàn bộ lịch sử so sánh?')) {
