@@ -678,6 +678,15 @@
                 <span class="threshold-value" id="thresholdDisplay">0.10</span>
             </div>
             <div class="control-group">
+                <label>🎨 Diff màu:</label>
+                <button class="btn btn-secondary btn-sm color-btn active" data-color="red" style="border-color:rgba(239,68,68,0.5);">🔴 Đỏ</button>
+                <button class="btn btn-secondary btn-sm color-btn" data-color="green" style="border-color:rgba(34,197,94,0.5);">🟢 Xanh</button>
+                <button class="btn btn-secondary btn-sm color-btn" data-color="blue" style="border-color:rgba(99,102,241,0.5);">🔵 Lam</button>
+                <button class="btn btn-secondary btn-sm color-btn" data-color="yellow" style="border-color:rgba(234,179,8,0.5);">🟡 Vàng</button>
+                <button class="btn btn-secondary btn-sm color-btn" data-color="cyan" style="border-color:rgba(6,182,212,0.5);">🩵 Cyan</button>
+                <button class="btn btn-secondary btn-sm color-btn" data-color="fuchsia" style="border-color:rgba(217,70,239,0.5);">🩷 Hồng</button>
+            </div>
+            <div class="control-group">
                 <label>📱 Viewport:</label>
                 <button class="btn btn-secondary btn-sm viewport-btn" data-w="375" data-h="812">📱 iPhone</button>
                 <button class="btn btn-secondary btn-sm viewport-btn" data-w="768" data-h="1024">📟 iPad</button>
@@ -864,6 +873,19 @@
         }
     });
 
+    // ─── Color mode ───
+    let currentDiffColor = [255, 0, 0]; // default red
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const map = { red: [255,0,0], green: [0,255,0], blue: [99,102,241], yellow: [234,179,8], cyan: [6,182,212], fuchsia: [217,70,239] };
+            currentDiffColor = map[btn.dataset.color] || [255,0,0];
+            if (resultShown) runComparison();
+        });
+    });
+    function getDiffColor() { return currentDiffColor; }
+
     // ─── Threshold ───
     thresholdSlider.addEventListener('input', () => {
         thresholdDisplay.textContent = parseFloat(thresholdSlider.value).toFixed(2);
@@ -1041,7 +1063,8 @@
         const diff = new ImageData(w, h);
 
         const threshold = parseFloat(thresholdSlider.value);
-        const diffPixels = pixelmatch(data1.data, data2.data, diff.data, w, h, { threshold });
+        const diffColor = getDiffColor();
+        const diffPixels = pixelmatch(data1.data, data2.data, diff.data, w, h, { threshold, diffColor });
 
         diffCanvas.width = w;
         diffCanvas.height = h;
