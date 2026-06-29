@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Regression Test Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/pixelmatch@5.3.0/dist/pixelmatch.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --secondary: #ec4899;
+            --accent: #06b6d4;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+            --radius: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        ::selection { background: var(--primary); color: white; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* ─── Navbar ─── */
+        nav {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.15em;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .nav-brand .logo-dot {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .nav-back {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-back:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.06);
+        }
+
+        /* ─── Hero ─── */
+        .page-hero {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+        .page-hero h1 {
+            font-size: clamp(1.8em, 4vw, 2.4em);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        .page-hero h1 .gradient-text {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .page-hero p {
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ─── Tool Section ─── */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .tool-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            min-height: 340px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tool-card h3 {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-card .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 240px;
+            background: rgba(255,255,255,0.02);
+        }
+        .tool-card .drop-zone:hover {
+            border-color: var(--primary);
+            background: rgba(99,102,241,0.05);
+        }
+        .tool-card .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99,102,241,0.1);
+        }
+        .tool-card .drop-zone.has-image {
+            border-style: solid;
+            border-color: var(--success);
+        }
+
+        .drop-zone .placeholder {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 20px;
+        }
+        .drop-zone .placeholder .icon {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .drop-zone .placeholder .label {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .drop-zone .placeholder .sub {
+            font-size: 0.8em;
+            margin-top: 4px;
+        }
+
+        .drop-zone img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+        }
+
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+
+        .file-name {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            margin-top: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ─── Diff Result ─── */
+        .result-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .result-header .left h3 {
+            font-size: 1.15em;
+        }
+        .result-header .left p {
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            text-align: center;
+            min-width: 100px;
+        }
+        .stat .num {
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+        .stat .num.green { color: var(--success); }
+        .stat .num.red { color: var(--error); }
+        .stat .num.yellow { color: var(--warning); }
+        .stat .lbl {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .result-canvas-wrap {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            min-height: 100px;
+        }
+        .result-canvas-wrap canvas {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #0b1120;
+        }
+        .result-canvas-wrap .empty-state {
+            color: var(--text-dim);
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* ─── Controls ─── */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .control-group label {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 140px;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 2px solid var(--bg-dark);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 2px solid var(--bg-dark);
+        }
+
+        .threshold-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: var(--primary-light);
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9em;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.25s ease;
+        }
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.35);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.45); }
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+        .btn-danger {
+            background: rgba(239,68,68,0.15);
+            color: var(--error);
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .btn-danger:hover { background: rgba(239,68,68,0.25); }
+        .btn-success {
+            background: rgba(34,197,94,0.15);
+            color: var(--success);
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+        .btn-success:hover { background: rgba(34,197,94,0.25); }
+        .btn-success:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ─── Terminal Guide ─── */
+        .guide-bar {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .guide-bar .icon { font-size: 1.3em; flex-shrink: 0; }
+        .guide-bar .text { color: var(--text-muted); font-size: 0.85em; }
+        .guide-bar .text strong { color: var(--text); }
+        .guide-bar .text code {
+            background: rgba(6,182,212,0.1);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .guide-bar .text code:hover { background: rgba(6,182,212,0.2); }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .tool-grid { grid-template-columns: 1fr; }
+            .result-header { flex-direction: column; align-items: flex-start; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .control-group { justify-content: space-between; }
+            input[type="range"] { flex: 1; }
+            .result-section { padding: 20px; }
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 0 16px; }
+            .result-stats { width: 100%; }
+            .stat { flex: 1; min-width: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container nav-inner">
+        <a href="index.html" class="nav-brand">
+            <span class="logo-dot">🎨</span>
+            VRT Demo
+        </a>
+        <a href="index.html" class="nav-back">← Quay về Trang Chủ</a>
+    </div>
+</nav>
+
+<section class="page-hero">
+    <div class="container">
+        <h1>🧪 <span class="gradient-text">Visual Regression Test Tool</span></h1>
+        <p>Upload 2 ảnh để so sánh pixel ngay trên trình duyệt — không cần cài đặt.</p>
+    </div>
+</section>
+
+<div class="container">
+
+    <!-- ─── Upload Grid ─── -->
+    <div class="tool-grid">
+        <div class="tool-card">
+            <h3>📸 Ảnh Gốc (Expected)</h3>
+            <div class="drop-zone" id="dropExpected">
+                <div class="placeholder">
+                    <span class="icon">🖼️</span>
+                    <span class="label">Kéo thả hoặc click để chọn</span>
+                    <span class="sub">PNG / JPG / WebP</span>
+                </div>
+                <img id="previewExpected" style="display:none" alt="Expected">
+                <input type="file" id="fileExpected" accept="image/png,image/jpeg,image/webp">
+            </div>
+            <div class="file-name" id="nameExpected"></div>
+        </div>
+
+        <div class="tool-card">
+            <h3>🔍 Ảnh Cần Test (Actual)</h3>
+            <div class="drop-zone" id="dropActual">
+                <div class="placeholder">
+                    <span class="icon">🖼️</span>
+                    <span class="label">Kéo thả hoặc click để chọn</span>
+                    <span class="sub">PNG / JPG / WebP</span>
+                </div>
+                <img id="previewActual" style="display:none" alt="Actual">
+                <input type="file" id="fileActual" accept="image/png,image/jpeg,image/webp">
+            </div>
+            <div class="file-name" id="nameActual"></div>
+        </div>
+    </div>
+
+    <!-- ─── Controls ─── -->
+    <div class="result-section" style="padding-bottom:20px;">
+        <div class="controls">
+            <div class="control-group">
+                <label>Threshold:</label>
+                <input type="range" id="thresholdSlider" min="0" max="1" step="0.05" value="0.1">
+                <span class="threshold-value" id="thresholdDisplay">0.10</span>
+            </div>
+            <div class="control-group">
+                <button class="btn btn-primary" id="btnCompare" disabled>🔍 So Sánh</button>
+                <button class="btn btn-success" id="btnDownload" disabled>💾 Tải Diff</button>
+                <button class="btn btn-danger" id="btnReset" disabled>🗑️ Xoá</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Result ─── -->
+    <div class="result-section" id="resultSection">
+        <div class="result-header">
+            <div class="left">
+                <h3>📊 Kết Quả So Sánh</h3>
+                <p>Diff image — pixel khác biệt được tô màu đỏ</p>
+            </div>
+            <div class="result-stats" id="stats">
+                <div class="stat"><div class="num green" id="statTotal">—</div><div class="lbl">Tổng pixel</div></div>
+                <div class="stat"><div class="num green" id="statSame">—</div><div class="lbl">Giống nhau</div></div>
+                <div class="stat"><div class="num red" id="statDiff">—</div><div class="lbl">Khác biệt</div></div>
+                <div class="stat"><div class="num yellow" id="statPercent">—</div><div class="lbl">% khác</div></div>
+            </div>
+        </div>
+        <div class="result-canvas-wrap">
+            <canvas id="diffCanvas" style="display:none"></canvas>
+            <div class="empty-state" id="emptyState">
+                <span style="font-size:2.5em;display:block;margin-bottom:8px;">🔬</span>
+                Upload 2 ảnh và nhấn "So Sánh" để xem kết quả
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Terminal Guide ─── -->
+    <div class="guide-bar" style="margin-bottom:40px;">
+        <span class="icon">💻</span>
+        <div class="text">
+            <strong>Cũng có thể test trong terminal:</strong>
+            Đặt ảnh vào <code>images/expected/</code> và <code>images/actual/</code> rồi chạy
+            <code id="cmdCopy">npm run test:compare-images</code>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropExpected = document.getElementById('dropExpected');
+    const dropActual = document.getElementById('dropActual');
+    const fileExpected = document.getElementById('fileExpected');
+    const fileActual = document.getElementById('fileActual');
+    const previewExpected = document.getElementById('previewExpected');
+    const previewActual = document.getElementById('previewActual');
+    const nameExpected = document.getElementById('nameExpected');
+    const nameActual = document.getElementById('nameActual');
+    const thresholdSlider = document.getElementById('thresholdSlider');
+    const thresholdDisplay = document.getElementById('thresholdDisplay');
+    const btnCompare = document.getElementById('btnCompare');
+    const btnDownload = document.getElementById('btnDownload');
+    const btnReset = document.getElementById('btnReset');
+    const diffCanvas = document.getElementById('diffCanvas');
+    const emptyState = document.getElementById('emptyState');
+    const statTotal = document.getElementById('statTotal');
+    const statSame = document.getElementById('statSame');
+    const statDiff = document.getElementById('statDiff');
+    const statPercent = document.getElementById('statPercent');
+
+    let imgData = { expected: null, actual: null };
+    let resultShown = false;
+
+    // ─── Threshold ───
+    thresholdSlider.addEventListener('input', () => {
+        thresholdDisplay.textContent = parseFloat(thresholdSlider.value).toFixed(2);
+        if (resultShown) runComparison();
+    });
+
+    // ─── Drop zone setup ───
+    function setupDropZone(zone, fileInput, preview, nameEl, key) {
+        zone.addEventListener('click', () => fileInput.click());
+
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0], fileInput, preview, nameEl, zone, key);
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) handleFile(fileInput.files[0], fileInput, preview, nameEl, zone, key);
+        });
+    }
+
+    function handleFile(file, fileInput, preview, nameEl, zone, key) {
+        if (!file.type.startsWith('image/')) {
+            alert('Vui lòng chọn file ảnh!');
+            return;
+        }
+        nameEl.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                zone.querySelector('.placeholder').style.display = 'none';
+                zone.classList.add('has-image');
+                imgData[key] = img;
+                updateCompareBtn();
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    setupDropZone(dropExpected, fileExpected, previewExpected, nameExpected, 'expected');
+    setupDropZone(dropActual, fileActual, previewActual, nameActual, 'actual');
+
+    // ─── Update compare button ───
+    function updateCompareBtn() {
+        btnCompare.disabled = !(imgData.expected && imgData.actual);
+    }
+
+    // ─── Compare ───
+    btnCompare.addEventListener('click', runComparison);
+
+    function runComparison() {
+        const img1 = imgData.expected;
+        const img2 = imgData.actual;
+        if (!img1 || !img2) return;
+
+        const w = Math.max(img1.width, img2.width);
+        const h = Math.max(img1.height, img2.height);
+
+        const c1 = document.createElement('canvas');
+        c1.width = w; c1.height = h;
+        const ctx1 = c1.getContext('2d');
+        ctx1.drawImage(img1, 0, 0);
+
+        const c2 = document.createElement('canvas');
+        c2.width = w; c2.height = h;
+        const ctx2 = c2.getContext('2d');
+        ctx2.drawImage(img2, 0, 0);
+
+        const data1 = ctx1.getImageData(0, 0, w, h);
+        const data2 = ctx2.getImageData(0, 0, w, h);
+        const diff = new ImageData(w, h);
+
+        const threshold = parseFloat(thresholdSlider.value);
+        const diffPixels = pixelmatch(data1.data, data2.data, diff.data, w, h, { threshold });
+
+        diffCanvas.width = w;
+        diffCanvas.height = h;
+        diffCanvas.getContext('2d').putImageData(diff, 0, 0);
+        diffCanvas.style.display = 'block';
+        emptyState.style.display = 'none';
+
+        const total = w * h;
+        const same = total - diffPixels;
+        const pct = total > 0 ? ((diffPixels / total) * 100).toFixed(2) : '0.00';
+
+        statTotal.textContent = total.toLocaleString();
+        statSame.textContent = same.toLocaleString();
+        statDiff.textContent = diffPixels.toLocaleString();
+        statPercent.textContent = pct + '%';
+
+        const sameEl = statSame.parentElement.querySelector('.num');
+        sameEl.className = 'num ' + (diffPixels === 0 ? 'green' : 'yellow');
+        statDiff.parentElement.querySelector('.num').className = 'num ' + (diffPixels === 0 ? 'green' : 'red');
+        statPercent.parentElement.querySelector('.num').className = 'num ' + (diffPixels === 0 ? 'green' : 'red');
+
+        resultShown = true;
+        btnDownload.disabled = false;
+        btnReset.disabled = false;
+    }
+
+    // ─── Download diff ───
+    btnDownload.addEventListener('click', () => {
+        if (!diffCanvas.width) return;
+        const link = document.createElement('a');
+        link.download = 'diff-result.png';
+        link.href = diffCanvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // ─── Reset ───
+    btnReset.addEventListener('click', () => {
+        [fileExpected, fileActual].forEach(f => { f.value = ''; });
+        [previewExpected, previewActual].forEach(p => { p.style.display = 'none'; });
+        [nameExpected, nameActual].forEach(n => { n.textContent = ''; });
+        [dropExpected, dropActual].forEach(z => {
+            z.classList.remove('has-image');
+            z.querySelector('.placeholder').style.display = '';
+        });
+        imgData = { expected: null, actual: null };
+        resultShown = false;
+        btnCompare.disabled = true;
+        btnDownload.disabled = true;
+        btnReset.disabled = true;
+        diffCanvas.style.display = 'none';
+        emptyState.style.display = '';
+        statTotal.textContent = '—';
+        statSame.textContent = '—';
+        statDiff.textContent = '—';
+        statPercent.textContent = '—';
+    });
+
+    // ─── Copy terminal command ───
+    document.getElementById('cmdCopy').addEventListener('click', () => {
+        const cmd = 'npm run test:compare-images';
+        navigator.clipboard.writeText(cmd).then(() => {
+            const el = document.getElementById('cmdCopy');
+            const orig = el.textContent;
+            el.textContent = '✅ Đã sao chép!';
+            setTimeout(() => el.textContent = orig, 1500);
+        });
+    });
+</script>
+
+</body>
+</html>
