@@ -678,6 +678,13 @@
                 <span class="threshold-value" id="thresholdDisplay">0.10</span>
             </div>
             <div class="control-group">
+                <label>📱 Viewport:</label>
+                <button class="btn btn-secondary btn-sm viewport-btn" data-w="375" data-h="812">📱 iPhone</button>
+                <button class="btn btn-secondary btn-sm viewport-btn" data-w="768" data-h="1024">📟 iPad</button>
+                <button class="btn btn-secondary btn-sm viewport-btn" data-w="1440" data-h="900">🖥️ Desktop</button>
+                <button class="btn btn-secondary btn-sm viewport-btn" data-w="0" data-h="0">🔄 Original</button>
+            </div>
+            <div class="control-group">
                 <button class="btn btn-primary" id="btnCompare" disabled>🔍 So Sánh</button>
                 <button class="btn btn-success" id="btnDownload" disabled>💾 Tải Diff</button>
                 <button class="btn btn-danger" id="btnReset" disabled>🗑️ Xoá</button>
@@ -1068,6 +1075,27 @@
         btnDownload.disabled = false;
         btnReset.disabled = false;
     }
+
+    // ─── Viewport presets ───
+    document.querySelectorAll('.viewport-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const w = parseInt(btn.dataset.w);
+            const h = parseInt(btn.dataset.h);
+            document.querySelectorAll('.viewport-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (w === 0) {
+                [dropExpected, dropActual].forEach(z => {
+                    const img = z.querySelector('img');
+                    if (img && img.src) { img.style.width = ''; img.style.height = ''; }
+                });
+                return;
+            }
+            [dropExpected, dropActual].forEach(z => {
+                const img = z.querySelector('img');
+                if (img && img.src) { img.style.width = w + 'px'; img.style.height = h + 'px'; }
+            });
+        });
+    });
 
     // ─── Download diff ───
     btnDownload.addEventListener('click', () => {
