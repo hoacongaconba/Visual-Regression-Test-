@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Regression Testing - Hướng Dẫn & Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --secondary: #ec4899;
+            --accent: #06b6d4;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            --gradient-2: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+            --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+            --radius: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 72px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        ::selection { background: var(--primary); color: white; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+        img, svg, video, canvas { max-width: 100%; height: auto; }
+        code, pre { word-break: break-word; overflow-wrap: break-word; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ─── Reveal Animation ─── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+        .reveal-delay-5 { transition-delay: 0.5s; }
+
+        /* ─── Navbar ─── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        background 0.35s ease;
+        }
+        nav.hidden { transform: translateY(-100%); }
+        nav.scrolled { background: rgba(15, 23, 42, 0.96); }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.15em;
+            color: var(--text);
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+        .nav-brand .logo-dot {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            list-style: none;
+            overflow-x: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .nav-links::-webkit-scrollbar { display: none; }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875em;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .nav-links a.active {
+            color: var(--primary-light);
+        }
+        .nav-links .btn-nav {
+            background: var(--gradient-1);
+            color: white !important;
+        }
+        .nav-links .btn-nav:hover {
+            opacity: 0.9;
+            background: var(--gradient-1);
+        }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--text);
+            border-radius: 2px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+        .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        /* ─── Hero ─── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 120px 0 80px;
+        }
+
+        .hero-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .hero-bg .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+        }
+        .hero-bg .orb:nth-child(1) {
+            width: 600px; height: 600px;
+            background: var(--primary);
+            top: -200px; right: -150px;
+            animation: float 20s ease-in-out infinite;
+        }
+        .hero-bg .orb:nth-child(2) {
+            width: 400px; height: 400px;
+            background: var(--secondary);
+            bottom: -100px; left: -100px;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        .hero-bg .orb:nth-child(3) {
+            width: 300px; height: 300px;
+            background: var(--accent);
+            top: 50%; left: 50%;
+            translate: -50% -50%;
+            animation: float 30s ease-in-out infinite 5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        .hero-content { position: relative; z-index: 1; max-width: 800px; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 100px;
+            font-size: 0.85em;
+            font-weight: 500;
+            color: var(--primary-light);
+            margin-bottom: 24px;
+        }
+        .hero-badge .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse-dot 2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.2em, 6vw, 4em);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            letter-spacing: -0.03em;
+        }
+        .hero h1 .gradient-text {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 1.15em;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 36px;
+            line-height: 1.7;
+        }
+        .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--text-muted);
+            transform: translateY(-2px);
+        }
+
+        /* ─── Section ─── */
+        section { padding: 100px 0; }
+
+        .section-label {
+            display: inline-block;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary-light);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: clamp(1.6em, 4vw, 2.5em);
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 1.05em;
+            max-width: 600px;
+            margin-bottom: 48px;
+        }
+        .section-desc.full { max-width: 100%; }
+
+        /* ─── Features Grid ─── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        .feature-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .feature-card h3 { font-size: 1.1em; margin-bottom: 8px; }
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        /* ─── Guide Section ─── */
+        .guide-grid { display: grid; gap: 20px; }
+
+        .guide-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .guide-item:hover { border-color: rgba(99, 102, 241, 0.3); }
+
+        .guide-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .guide-number {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+        .guide-header h3 { font-size: 1.1em; padding-top: 6px; }
+
+        .guide-desc {
+            color: var(--text-muted);
+            font-size: 0.9em;
+            margin-bottom: 14px;
+            padding-left: 56px;
+        }
+        .guide-desc em { color: var(--text-dim); font-size: 0.95em; }
+        .guide-desc strong { color: var(--text); }
+
+        .code-block {
+            background: #0b1120;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85em;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin-left: 56px;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.2s ease;
+            word-break: break-word;
+        }
+        .code-block:hover { border-color: var(--primary); }
+        .code-block .cmd { color: var(--accent); }
+        .code-block .comment { color: var(--text-dim); font-style: italic; }
+        .code-block .string { color: #a5b4fc; }
+        .code-block .keyword { color: #f472b6; }
+
+        .code-block .copy-hint {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-size: 0.75em;
+            color: var(--text-dim);
+            font-family: 'Inter', sans-serif;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        .code-block:hover .copy-hint { opacity: 1; }
+        .code-block.copied .copy-hint { color: var(--success); opacity: 1; }
+
+        .guide-tip {
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: rgba(245, 158, 11, 0.08);
+            border-left: 3px solid var(--warning);
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-left: 56px;
+            word-break: break-word;
+        }
+        .guide-tip code {
+            background: rgba(255,255,255,0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: var(--accent);
+        }
+
+        /* ─── Workflow ─── */
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+        .workflow-step {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .workflow-step:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        .workflow-step .step-num {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2em;
+            margin: 0 auto 16px;
+        }
+        .workflow-step h4 { margin-bottom: 8px; }
+        .workflow-step p { color: var(--text-muted); font-size: 0.9em; }
+        .workflow-step .status {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 4px 14px;
+            border-radius: 100px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .status-pass { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+        .status-fail { background: rgba(239, 68, 68, 0.15); color: var(--error); }
+
+        /* ─── Commands ─── */
+        .commands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .cmd-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .cmd-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        .cmd-card:active { transform: translateY(0); }
+        .cmd-card.copied .cmd-code { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+
+        .cmd-card .cmd-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+        .cmd-card .cmd-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
+            flex-shrink: 0;
+        }
+        .cmd-card .cmd-info {
+            font-size: 0.9em;
+            min-width: 0;
+        }
+        .cmd-card .cmd-info .cmd-name {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .cmd-card .cmd-info .cmd-desc {
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+        .cmd-card .cmd-code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8em;
+            color: var(--accent);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            max-width: 50%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        /* ─── Tech Stack ─── */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
+        }
+        .tech-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 0;
+        }
+        .tech-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+        .tech-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+        .tech-item .tech-name { font-weight: 600; font-size: 0.95em; }
+        .tech-item .tech-role { color: var(--text-muted); font-size: 0.8em; }
+
+        /* ─── Toast ─── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            translate: -50% 0;
+            padding: 10px 24px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 0.85em;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: var(--shadow-lg);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ─── Scroll To Top ─── */
+        .scroll-top {
+            position: fixed;
+            bottom: 80px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2em;
+            z-index: 999;
+            opacity: 0;
+            transform: translateY(20px) scale(0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow);
+            pointer-events: none;
+        }
+        .scroll-top.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .scroll-top:hover {
+            border-color: var(--primary);
+            color: var(--primary-light);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        /* ─── Footer ─── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.85em;
+        }
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        footer .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        footer .footer-links a:hover { color: var(--text); }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 900px) {
+            .guide-item { padding: 24px 20px; }
+            .guide-desc { padding-left: 0; }
+            .code-block { margin-left: 0; }
+            .guide-tip { margin-left: 0; }
+            .guide-header h3 { font-size: 1em; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: rgba(15, 23, 42, 0.98);
+                flex-direction: column;
+                padding: 12px;
+                border-bottom: 1px solid var(--border);
+                gap: 2px;
+                overflow-x: visible;
+            }
+            .nav-links.open { display: flex; }
+            .nav-toggle { display: flex; }
+
+            .hero { padding: 100px 0 60px; }
+            section { padding: 60px 0; }
+
+            .code-block { font-size: 0.78em; padding: 12px 14px; }
+            .code-block .copy-hint { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 0 16px; }
+            .hero h1 { font-size: clamp(1.8em, 8vw, 2.5em); }
+            .hero p { font-size: 1em; }
+            .hero-actions { flex-direction: column; }
+            .hero-actions .btn { width: 100%; justify-content: center; }
+            .features-grid { grid-template-columns: 1fr; }
+            .commands-grid { grid-template-columns: 1fr; }
+            .cmd-card { flex-wrap: wrap; }
+            .cmd-card .cmd-code { max-width: 100%; white-space: normal; }
+            .workflow { grid-template-columns: 1fr; }
+            .tech-grid { grid-template-columns: 1fr; }
+            .guide-item { padding: 20px 16px; }
+            .guide-header { gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav id="navbar">
+    <div class="container nav-inner">
+        <a href="#" class="nav-brand">
+            <span class="logo-dot">🎨</span>
+            VRT Demo
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#home" class="active">Trang Chủ</a></li>
+            <li><a href="#features">Tính Năng</a></li>
+            <li><a href="#guide">Hướng Dẫn</a></li>
+            <li><a href="#commands">Lệnh</a></li>
+            <li><a href="#workflow">Workflow</a></li>
+            <li><a href="#techstack">Công Nghệ</a></li>
+            <li><a href="#guide" class="btn-nav">Bắt Đầu</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero" id="home">
+    <div class="hero-bg">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                Playwright + pixelmatch + pngjs
+            </div>
+            <h1>
+                Visual Regression<br>
+                <span class="gradient-text">Testing Demo</span>
+            </h1>
+            <p>
+                Dự án hoàn chỉnh giúp bạn học và thực hành kiểm tra hồi quy giao diện.
+                So sánh từng pixel, phát hiện thay đổi, và tạo báo cáo chi tiết tự động.
+            </p>
+            <div class="hero-actions">
+                <a href="#guide" class="btn btn-primary">📖 Xem Hướng Dẫn</a>
+                <a href="#commands" class="btn btn-secondary">⚡ Chạy Test Ngay</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FEATURES ==================== -->
+<section id="features">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">✦ Tính Năng</span>
+            <h2 class="section-title">Tại Sao Nên Dùng Visual Regression Testing?</h2>
+            <p class="section-desc">
+                Phát hiện lỗi giao diện trước khi người dùng nhìn thấy — tự động hóa hoàn toàn việc kiểm tra pixel.
+            </p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal reveal-delay-1">
+                <div class="feature-icon" style="background: rgba(99,102,241,0.15);">📸</div>
+                <h3>Screenshot Testing</h3>
+                <p>Kiểm tra giao diện website có thay đổi không bằng cách so sánh ảnh chụp màn hình tự động.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-2">
+                <div class="feature-icon" style="background: rgba(236,72,153,0.15);">🔍</div>
+                <h3>Pixel Perfect</h3>
+                <p>So sánh từng pixel giữa 2 ảnh với threshold tùy chỉnh, phát hiện thay đổi nhỏ nhất.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-3">
+                <div class="feature-icon" style="background: rgba(6,182,212,0.15);">🌐</div>
+                <h3>Multi-Browser</h3>
+                <p>Chạy test đồng thời trên Chromium, Firefox và WebKit để đảm bảo tương thích đa trình duyệt.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-4">
+                <div class="feature-icon" style="background: rgba(34,197,94,0.15);">📊</div>
+                <h3>HTML Report</h3>
+                <p>Xem kết quả test chi tiết với diff image, so sánh expected vs actual ngay trên trình duyệt.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-5">
+                <div class="feature-icon" style="background: rgba(245,158,11,0.15);">⚡</div>
+                <h3>Snapshot Testing</h3>
+                <p>Lưu snapshot lần đầu, tự động so sánh các lần sau. Workflow đơn giản, hiệu quả.</p>
+            </div>
+            <div class="feature-card reveal reveal-delay-5">
+                <div class="feature-icon" style="background: rgba(168,85,247,0.15);">🔄</div>
+                <h3>Diff Image</h3>
+                <p>Tạo ảnh diff tô đỏ phần khác biệt, giúp xác định chính xác vùng thay đổi trên giao diện.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== GUIDE ==================== -->
+<section id="guide" style="background: rgba(255,255,255,0.015);">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">📖 Hướng Dẫn</span>
+            <h2 class="section-title">Cách Sử Dụng Dự Án</h2>
+            <p class="section-desc full">
+                Từ khởi động server đến xem báo cáo — làm theo các bước dưới đây để bắt đầu với Visual Regression Testing.
+            </p>
+        </div>
+        <div class="guide-grid">
+            <!-- 1 -->
+            <div class="guide-item reveal reveal-delay-1">
+                <div class="guide-header">
+                    <span class="guide-number">1</span>
+                    <h3>🏁 Chạy Demo Website</h3>
+                </div>
+                <p class="guide-desc">
+                    Khởi động HTTP server local để serve trang web demo tại <strong>http://localhost:3000</strong>
+                </p>
+                <div class="code-block" data-cmd="npm run server">
+                    <span class="copy-hint">📋 Sao chép</span>
+                    <span class="cmd">npm</span> run server
+                </div>
+            </div>
+            <!-- 2 -->
+            <div class="guide-item reveal reveal-delay-2">
+                <div class="guide-header">
+                    <span class="guide-number">2</span>
+                    <h3>🧪 Test So Sánh Ảnh PNG</h3>
+                </div>
+                <p class="guide-desc">
+                    So sánh 2 ảnh PNG từ thư mục <strong>images/expected</strong> và <strong>images/actual</strong>.
+                    Kết quả diff được lưu vào <strong>images/diff</strong>.
+                </p>
+                <div class="code-block" data-cmd="npm run test:compare-images">
+                    <span class="copy-hint">📋 Sao chép</span>
+                    <span class="comment"># So sánh tất cả ảnh trong thư mục</span><br>
+                    <span class="cmd">npm</span> run test:compare-images
+                </div>
+                <div class="guide-tip">💡 Đặt ảnh chuẩn trong <code>images/expected/</code> và ảnh cần kiểm tra trong <code>images/actual/</code>.</div>
+            </div>
+            <!-- 3 -->
+            <div class="guide-item reveal reveal-delay-3">
+                <div class="guide-header">
+                    <span class="guide-number">3</span>
+                    <h3>🌍 Test So Sánh 2 Website</h3>
+                </div>
+                <p class="guide-desc">
+                    Chụp ảnh 2 trang web khác nhau rồi so sánh pixel. Mặc định so sánh
+                    <strong>playwright.dev</strong> với chính nó (sẽ PASS). Sửa URL trong file test để tạo lỗi.
+                </p>
+                <div class="code-block" data-cmd="npm run test:compare-websites">
+                    <span class="copy-hint">📋 Sao chép</span>
+                    <span class="comment"># Chạy test so sánh website</span><br>
+                    <span class="cmd">npm</span> run test:compare-websites
+                </div>
+                <div class="guide-tip">💡 Mở <code>tests/compare-websites.spec.js</code> dòng 24, đổi URL để tạo visual regression.<br>Ví dụ: <code>await page.goto('https://playwright.dev/docs/intro');</code></div>
+            </div>
+            <!-- 4 -->
+            <div class="guide-item reveal reveal-delay-4">
+                <div class="guide-header">
+                    <span class="guide-number">4</span>
+                    <h3>📸 Test Snapshot Visual</h3>
+                </div>
+                <p class="guide-desc">
+                    So sánh full page screenshot với snapshot đã lưu trước đó.
+                    <strong>Lần đầu:</strong> tạo snapshot mới → PASS.
+                    <strong>Lần sau:</strong> so sánh → PASS nếu giống, FAIL nếu khác.
+                </p>
+                <div class="code-block" data-cmd="npm run test:visual">
+                    <span class="copy-hint">📋 Sao chép</span>
+                    <span class="comment"># Chạy test snapshot</span><br>
+                    <span class="cmd">npm</span> run test:visual
+                </div>
+                <div class="guide-tip">💡 Để cập nhật snapshot mới: <code>npx playwright test --update-snapshots</code></div>
+            </div>
+            <!-- 5 -->
+            <div class="guide-item reveal reveal-delay-5">
+                <div class="guide-header">
+                    <span class="guide-number">5</span>
+                    <h3>📋 Test Demo Website</h3>
+                </div>
+                <p class="guide-desc">
+                    Chạy bộ 7 test cho trang demo: chụp full page, header, cards, features,
+                    responsive mobile (375×812), hover effect, và kiểm tra DOM structure.
+                </p>
+                <div class="code-block" data-cmd="npm run test:visual">
+                    <span class="copy-hint">📋 Sao chép</span>
+                    <span class="comment"># Chạy test demo</span><br>
+                    <span class="cmd">npm</span> run test:visual
+                </div>
+                <div class="guide-tip">💡 Sửa <code>public/index.html</code> (ví dụ đổi gradient) rồi chạy lại test để thấy visual regression FAIL.</div>
+            </div>
+            <!-- 6 -->
+            <div class="guide-item reveal reveal-delay-5">
+                <div class="guide-header">
+                    <span class="guide-number">6</span>
+                    <h3>📊 Xem HTML Report</h3>
+                </div>
+                <p class="guide-desc">
+                    Sau khi test chạy xong, mở HTML report để xem chi tiết từng test case,
+                    ảnh expected vs actual, và diff image.
+                </p>
+                <div class="code-block" data-cmd="npm run report">
+                    <span class="copy-hint">📋 Sao chép</span>
+                    <span class="comment"># Mở report</span><br>
+                    <span class="cmd">npm</span> run report
+                </div>
+                <div class="guide-tip">💡 Trong report, click vào test FAIL để xem ảnh diff với phần khác biệt được tô đỏ.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== COMMANDS ==================== -->
+<section id="commands">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">⚡ Lệnh</span>
+            <h2 class="section-title">Tất Cả Các NPM Scripts</h2>
+            <p class="section-desc">
+                Các lệnh có sẵn trong <code>package.json</code> để chạy server, test, và xem báo cáo. <strong>Click để sao chép.</strong>
+            </p>
+        </div>
+        <div class="commands-grid reveal reveal-delay-1">
+            <div class="cmd-card" data-cmd="npm run server">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(99,102,241,0.15);">🚀</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">Chạy HTTP Server</span>
+                        <span class="cmd-desc">Serve demo tại localhost:3000</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm run server</span>
+            </div>
+            <div class="cmd-card" data-cmd="npm test">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(34,197,94,0.15);">🧪</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">Chạy Tất Cả Test</span>
+                        <span class="cmd-desc">Toàn bộ test suite</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm test</span>
+            </div>
+            <div class="cmd-card" data-cmd="npm run test:compare-images">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(6,182,212,0.15);">🖼️</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">So Sánh Ảnh PNG</span>
+                        <span class="cmd-desc">So sánh expected vs actual</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm run test:compare-images</span>
+            </div>
+            <div class="cmd-card" data-cmd="npm run test:compare-websites">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(168,85,247,0.15);">🌍</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">So Sánh 2 Website</span>
+                        <span class="cmd-desc">Chụp & so sánh pixel</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm run test:compare-websites</span>
+            </div>
+            <div class="cmd-card" data-cmd="npm run test:visual">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(245,158,11,0.15);">📸</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">Snapshot Testing</span>
+                        <span class="cmd-desc">So sánh với snapshot</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm run test:visual</span>
+            </div>
+            <div class="cmd-card" data-cmd="npm run test:ui">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(236,72,153,0.15);">🎛️</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">UI Mode</span>
+                        <span class="cmd-desc">Test với giao diện đồ họa</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm run test:ui</span>
+            </div>
+            <div class="cmd-card" data-cmd="npm run test:debug">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(239,68,68,0.15);">🐛</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">Debug Mode</span>
+                        <span class="cmd-desc">Chạy test với inspector</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm run test:debug</span>
+            </div>
+            <div class="cmd-card" data-cmd="npm run report">
+                <div class="cmd-left">
+                    <span class="cmd-icon" style="background:rgba(34,197,94,0.15);">📊</span>
+                    <div class="cmd-info">
+                        <span class="cmd-name">Xem HTML Report</span>
+                        <span class="cmd-desc">Mở báo cáo test</span>
+                    </div>
+                </div>
+                <span class="cmd-code">npm run report</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== WORKFLOW ==================== -->
+<section id="workflow" style="background: rgba(255,255,255,0.015);">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">🔄 Workflow</span>
+            <h2 class="section-title">Cách Thức Hoạt Động</h2>
+            <p class="section-desc">
+                Visual Regression Testing hoạt động theo 2 phase: tạo snapshot và so sánh.
+            </p>
+        </div>
+        <div class="workflow">
+            <div class="workflow-step reveal reveal-delay-1">
+                <span class="step-num">1</span>
+                <h4>Chụp Screenshot</h4>
+                <p>Playwright truy cập trang web và chụp ảnh màn hình tự động</p>
+                <span class="status status-pass">📸 Chụp ảnh</span>
+            </div>
+            <div class="workflow-step reveal reveal-delay-2">
+                <span class="step-num">2</span>
+                <h4>Kiểm Tra Snapshot</h4>
+                <p>So sánh screenshot với snapshot đã lưu từ lần chạy trước</p>
+                <span class="status status-pass">🔍 So sánh</span>
+            </div>
+            <div class="workflow-step reveal reveal-delay-3">
+                <span class="step-num">3</span>
+                <h4>Phát Hiện Khác Biệt</h4>
+                <p>Nếu có thay đổi, pixelmatch sẽ tạo ảnh diff tô đỏ phần lỗi</p>
+                <span class="status status-fail">⚠️ Diff</span>
+            </div>
+            <div class="workflow-step reveal reveal-delay-4">
+                <span class="step-num">4</span>
+                <h4>Xem Báo Cáo</h4>
+                <p>Mở HTML report để xem expected, actual và diff image chi tiết</p>
+                <span class="status status-pass">📊 Report</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== TECH STACK ==================== -->
+<section id="techstack">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">🛠️ Công Nghệ</span>
+            <h2 class="section-title">Tech Stack</h2>
+            <p class="section-desc">Các thư viện và công cụ chính sử dụng trong dự án.</p>
+        </div>
+        <div class="tech-grid">
+            <div class="tech-item reveal reveal-delay-1">
+                <span class="tech-icon" style="background:rgba(99,102,241,0.15);">🎭</span>
+                <div style="min-width:0">
+                    <div class="tech-name">Playwright</div>
+                    <div class="tech-role">Test Framework & Browser Automation</div>
+                </div>
+            </div>
+            <div class="tech-item reveal reveal-delay-2">
+                <span class="tech-icon" style="background:rgba(6,182,212,0.15);">🖼️</span>
+                <div style="min-width:0">
+                    <div class="tech-name">pngjs</div>
+                    <div class="tech-role">Đọc & ghi file PNG</div>
+                </div>
+            </div>
+            <div class="tech-item reveal reveal-delay-3">
+                <span class="tech-icon" style="background:rgba(236,72,153,0.15);">🎯</span>
+                <div style="min-width:0">
+                    <div class="tech-name">pixelmatch</div>
+                    <div class="tech-role">So sánh pixel chính xác</div>
+                </div>
+            </div>
+            <div class="tech-item reveal reveal-delay-4">
+                <span class="tech-icon" style="background:rgba(34,197,94,0.15);">🟢</span>
+                <div style="min-width:0">
+                    <div class="tech-name">Node.js</div>
+                    <div class="tech-role">HTTP Server (http module)</div>
+                </div>
+            </div>
+            <div class="tech-item reveal reveal-delay-5">
+                <span class="tech-icon" style="background:rgba(245,158,11,0.15);">📊</span>
+                <div style="min-width:0">
+                    <div class="tech-name">HTML Reporter</div>
+                    <div class="tech-role">Báo cáo test trực quan</div>
+                </div>
+            </div>
+            <div class="tech-item reveal reveal-delay-5">
+                <span class="tech-icon" style="background:rgba(168,85,247,0.15);">🌍</span>
+                <div style="min-width:0">
+                    <div class="tech-name">Chromium · Firefox · WebKit</div>
+                    <div class="tech-role">3 trình duyệt chính</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== SCROLL TO TOP ==================== -->
+<button class="scroll-top" id="scrollTop" aria-label="Lên đầu trang">⬆</button>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+    <div class="container">
+        <div class="footer-links">
+            <a href="#home">Trang Chủ</a>
+            <a href="#features">Tính Năng</a>
+            <a href="#guide">Hướng Dẫn</a>
+            <a href="#commands">Lệnh</a>
+            <a href="#workflow">Workflow</a>
+            <a href="#techstack">Công Nghệ</a>
+        </div>
+        <p>🎯 Dự án minh họa Visual Regression Testing với Playwright + pixelmatch + pngjs</p>
+        <p style="margin-top:4px;">⚡ Chạy <code style="color:var(--accent);">npm run server</code> để serve trang này</p>
+    </div>
+</footer>
+
+<script>
+    // ─── Navbar toggle (mobile) ───
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+        navToggle.classList.toggle('open');
+        navLinks.classList.toggle('open');
+    });
+    document.querySelectorAll('.nav-links a').forEach(a => {
+        a.addEventListener('click', () => {
+            navToggle.classList.remove('open');
+            navLinks.classList.remove('open');
+        });
+    });
+
+    // ─── Navbar hide/show on scroll ───
+    const navbar = document.getElementById('navbar');
+    let lastScrollY = 0;
+    let ticking = false;
+
+    function updateNavbar() {
+        const currentY = window.scrollY;
+        if (currentY > 80) {
+            navbar.classList.add('scrolled');
+            if (currentY > lastScrollY) {
+                navbar.classList.add('hidden');
+            } else {
+                navbar.classList.remove('hidden');
+            }
+        } else {
+            navbar.classList.remove('scrolled', 'hidden');
+        }
+        lastScrollY = currentY;
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(updateNavbar);
+            ticking = true;
+        }
+    });
+
+    // ─── Active nav link ───
+    const sections = document.querySelectorAll('section[id]');
+    const navAnchors = document.querySelectorAll('.nav-links a:not(.btn-nav)');
+
+    function updateActiveLink() {
+        let currentId = '';
+        const scrollPos = window.scrollY + 120;
+        sections.forEach(s => {
+            if (s.offsetTop <= scrollPos && s.offsetTop + s.offsetHeight > scrollPos) {
+                currentId = s.id;
+            }
+        });
+        navAnchors.forEach(a => {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + currentId);
+        });
+    }
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) requestAnimationFrame(() => { updateActiveLink(); ticking = false; });
+        ticking = true;
+    });
+
+    // ─── Scroll to top ───
+    const scrollBtn = document.getElementById('scrollTop');
+    window.addEventListener('scroll', () => {
+        scrollBtn.classList.toggle('show', window.scrollY > 400);
+    });
+    scrollBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ─── Reveal on scroll ───
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ─── Toast ───
+    const toast = document.getElementById('toast');
+    let toastTimer;
+
+    function showToast(msg) {
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.add('show');
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // ─── Copy command: code blocks ───
+    document.querySelectorAll('.code-block').forEach(block => {
+        block.addEventListener('click', () => {
+            const cmd = block.getAttribute('data-cmd');
+            if (!cmd) return;
+            navigator.clipboard.writeText(cmd).then(() => {
+                block.classList.add('copied');
+                showToast('✅ Đã sao chép: ' + cmd);
+                setTimeout(() => block.classList.remove('copied'), 1500);
+            }).catch(() => {
+                showToast('❌ Không thể sao chép');
+            });
+        });
+    });
+
+    // ─── Copy command: cmd cards ───
+    document.querySelectorAll('.cmd-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const cmd = card.getAttribute('data-cmd');
+            if (!cmd) return;
+            navigator.clipboard.writeText(cmd).then(() => {
+                card.classList.add('copied');
+                showToast('✅ Đã sao chép: ' + cmd);
+                setTimeout(() => card.classList.remove('copied'), 1500);
+            }).catch(() => {
+                showToast('❌ Không thể sao chép');
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
