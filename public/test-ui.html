@@ -419,6 +419,78 @@
             transform: none;
         }
 
+        /* ─── History ─── */
+        .history-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+        }
+        .history-panel .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .history-panel .history-header h3 { font-size: 1.1em; }
+        .history-panel .history-header .count {
+            font-size: 0.85em;
+            color: var(--text-muted);
+        }
+        .history-list {
+            display: grid;
+            gap: 8px;
+        }
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .history-item:hover {
+            border-color: var(--border);
+            background: rgba(255,255,255,0.04);
+        }
+        .history-item .h-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .history-item .h-status.pass { background: var(--success); }
+        .history-item .h-status.fail { background: var(--error); }
+        .history-item .h-info { flex: 1; min-width: 0; }
+        .history-item .h-info .h-name {
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .history-item .h-info .h-meta {
+            font-size: 0.75em;
+            color: var(--text-dim);
+        }
+        .history-item .h-diff {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8em;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .history-empty {
+            color: var(--text-dim);
+            text-align: center;
+            padding: 32px;
+            font-size: 0.9em;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+        }
+
         /* ─── Slider Compare ─── */
         .slider-compare {
             position: relative;
@@ -666,6 +738,22 @@
         </div>
     </div>
 
+    <!-- ─── History ─── -->
+    <div class="history-panel" id="historyPanel">
+        <div class="history-header">
+            <div>
+                <h3>📜 Lịch Sử So Sánh</h3>
+                <span class="count" id="historyCount">0 lần</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="btnClearHistory" disabled>🗑️ Xoá lịch sử</button>
+            </div>
+        </div>
+        <div class="history-list" id="historyList">
+            <div class="history-empty">Chưa có lịch sử. So sánh ảnh để lưu kết quả.</div>
+        </div>
+    </div>
+
     <!-- ─── Terminal Guide ─── -->
     <div class="guide-bar" style="margin-bottom:40px;">
         <span class="icon">💻</span>
@@ -714,6 +802,60 @@
     const blinkSpeedDisplay = document.getElementById('blinkSpeedDisplay');
     let blinkInterval = null;
     let blinkShowing = true;
+
+    const historyList = document.getElementById('historyList');
+    const historyCount = document.getElementById('historyCount');
+    const btnClearHistory = document.getElementById('btnClearHistory');
+    let historyData = JSON.parse(localStorage.getItem('vrt_history') || '[]');
+
+    function saveHistory(name1, name2, total, diffPx, threshold) {
+        const entry = {
+            id: Date.now(),
+            time: new Date().toLocaleString('vi-VN'),
+            name1, name2,
+            total,
+            diff: diffPx,
+            threshold,
+            pass: diffPx === 0
+        };
+        historyData.unshift(entry);
+        if (historyData.length > 50) historyData = historyData.slice(0, 50);
+        localStorage.setItem('vrt_history', JSON.stringify(historyData));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        historyList.innerHTML = '';
+        historyCount.textContent = historyData.length + ' lần';
+        btnClearHistory.disabled = historyData.length === 0;
+        if (historyData.length === 0) {
+            historyList.innerHTML = '<div class="history-empty">Chưa có lịch sử. So sánh ảnh để lưu kết quả.</div>';
+            return;
+        }
+        historyData.forEach(e => {
+            const pct = e.total > 0 ? ((e.diff / e.total) * 100).toFixed(2) : '0.00';
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <span class="h-status ${e.pass ? 'pass' : 'fail'}"></span>
+                <div class="h-info">
+                    <div class="h-name">${e.pass ? '✅' : '❌'} ${e.name1} vs ${e.name2}</div>
+                    <div class="h-meta">${e.time} · threshold ${e.threshold}</div>
+                </div>
+                <div class="h-diff">${e.diff.toLocaleString()} px (${pct}%)</div>
+            `;
+            historyList.appendChild(div);
+        });
+    }
+    renderHistory();
+
+    btnClearHistory.addEventListener('click', () => {
+        if (confirm('Xoá toàn bộ lịch sử so sánh?')) {
+            historyData = [];
+            localStorage.setItem('vrt_history', JSON.stringify(historyData));
+            renderHistory();
+        }
+    });
 
     // ─── Threshold ───
     thresholdSlider.addEventListener('input', () => {
@@ -917,6 +1059,11 @@
         document.getElementById('resultTabs').style.display = 'flex';
         initSlider();
         initBlink();
+
+        const n1 = nameExpected.textContent || 'expected';
+        const n2 = nameActual.textContent || 'actual';
+        saveHistory(n1, n2, total, diffPixels, threshold);
+
         resultShown = true;
         btnDownload.disabled = false;
         btnReset.disabled = false;
