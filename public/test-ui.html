@@ -286,6 +286,36 @@
             padding: 40px;
         }
 
+        .result-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .result-tabs button {
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .result-tabs button:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+        }
+        .result-tabs button.active {
+            color: var(--primary-light);
+            border-color: var(--primary);
+            background: rgba(99,102,241,0.1);
+        }
+        .result-tab-content { display: none; }
+        .result-tab-content.active { display: flex; }
+
         /* ─── Controls ─── */
         .controls {
             display: flex;
@@ -387,6 +417,89 @@
             opacity: 0.4;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* ─── Slider Compare ─── */
+        .slider-compare {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #0b1120;
+            cursor: ew-resize;
+            user-select: none;
+            display: none;
+            max-width: 100%;
+        }
+        .slider-compare img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        .slider-compare .slider-img-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            overflow: hidden;
+            width: 50%;
+        }
+        .slider-compare .slider-img-top img {
+            display: block;
+            height: 100%;
+            width: auto;
+            max-width: none;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .slider-compare .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            background: white;
+            transform: translateX(-2px);
+            z-index: 2;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .slider-compare .slider-handle::before {
+            content: '↔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #0f172a;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .slider-compare .slider-label {
+            position: absolute;
+            bottom: 8px;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            pointer-events: none;
+            z-index: 3;
+        }
+        .slider-compare .slider-label.expected {
+            left: 8px;
+        }
+        .slider-compare .slider-label.actual {
+            right: 8px;
         }
 
         /* ─── Terminal Guide ─── */
@@ -514,8 +627,25 @@
                 <div class="stat"><div class="num yellow" id="statPercent">—</div><div class="lbl">% khác</div></div>
             </div>
         </div>
+        <div class="result-tabs" id="resultTabs" style="display:none">
+            <button class="active" data-tab="diff">🔬 Diff</button>
+            <button data-tab="slider">🔄 Slider</button>
+        </div>
         <div class="result-canvas-wrap">
-            <canvas id="diffCanvas" style="display:none"></canvas>
+            <div class="result-tab-content active" id="tabDiff">
+                <canvas id="diffCanvas" style="display:none"></canvas>
+            </div>
+            <div class="result-tab-content" id="tabSlider">
+                <div class="slider-compare" id="sliderCompare">
+                    <img id="sliderBase" alt="Expected">
+                    <div class="slider-img-top" id="sliderOverlay">
+                        <img id="sliderOverlayImg" alt="Actual">
+                    </div>
+                    <div class="slider-handle"></div>
+                    <span class="slider-label expected">📸 Expected</span>
+                    <span class="slider-label actual">🔍 Actual</span>
+                </div>
+            </div>
             <div class="empty-state" id="emptyState">
                 <span style="font-size:2.5em;display:block;margin-bottom:8px;">🔬</span>
                 Upload 2 ảnh và nhấn "So Sánh" để xem kết quả
@@ -557,11 +687,63 @@
 
     let imgData = { expected: null, actual: null };
     let resultShown = false;
+    let sliderActive = false;
+
+    const sliderCompare = document.getElementById('sliderCompare');
+    const sliderBase = document.getElementById('sliderBase');
+    const sliderOverlay = document.getElementById('sliderOverlay');
+    const sliderOverlayImg = document.getElementById('sliderOverlayImg');
 
     // ─── Threshold ───
     thresholdSlider.addEventListener('input', () => {
         thresholdDisplay.textContent = parseFloat(thresholdSlider.value).toFixed(2);
         if (resultShown) runComparison();
+    });
+
+    // ─── Result tabs ───
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.result-tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1)).classList.add('active');
+        });
+    });
+
+    // ─── Slider compare ───
+    function initSlider() {
+        if (!imgData.expected || !imgData.actual || sliderActive) return;
+        sliderActive = true;
+        sliderBase.src = previewExpected.src;
+        sliderOverlayImg.src = previewActual.src;
+        sliderCompare.style.display = 'block';
+
+        const maxW = Math.max(imgData.expected.naturalWidth, imgData.actual.naturalWidth);
+        const maxH = Math.max(imgData.expected.naturalHeight, imgData.actual.naturalHeight);
+        const container = sliderCompare.parentElement;
+        const maxContainerW = container.clientWidth - 4;
+        const scale = Math.min(1, maxContainerW / maxW);
+        const dispW = Math.floor(maxW * scale);
+        const dispH = Math.floor(maxH * scale);
+        sliderCompare.style.width = dispW + 'px';
+        sliderCompare.style.aspectRatio = maxW + '/' + maxH;
+    }
+
+    sliderCompare.addEventListener('mousemove', (e) => {
+        const rect = sliderCompare.getBoundingClientRect();
+        let pct = ((e.clientX - rect.left) / rect.width) * 100;
+        pct = Math.max(0, Math.min(100, pct));
+        sliderOverlay.style.width = pct + '%';
+        sliderCompare.querySelector('.slider-handle').style.left = pct + '%';
+    });
+    sliderCompare.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const rect = sliderCompare.getBoundingClientRect();
+        const touch = e.touches[0];
+        let pct = ((touch.clientX - rect.left) / rect.width) * 100;
+        pct = Math.max(0, Math.min(100, pct));
+        sliderOverlay.style.width = pct + '%';
+        sliderCompare.querySelector('.slider-handle').style.left = pct + '%';
     });
 
     // ─── Drop zone setup ───
@@ -662,6 +844,8 @@
         statDiff.parentElement.querySelector('.num').className = 'num ' + (diffPixels === 0 ? 'green' : 'red');
         statPercent.parentElement.querySelector('.num').className = 'num ' + (diffPixels === 0 ? 'green' : 'red');
 
+        document.getElementById('resultTabs').style.display = 'flex';
+        initSlider();
         resultShown = true;
         btnDownload.disabled = false;
         btnReset.disabled = false;
@@ -691,6 +875,13 @@
         btnDownload.disabled = true;
         btnReset.disabled = true;
         diffCanvas.style.display = 'none';
+        sliderCompare.style.display = 'none';
+        sliderActive = false;
+        document.getElementById('resultTabs').style.display = 'none';
+        document.querySelectorAll('.result-tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tabDiff').classList.add('active');
+        document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+        document.querySelector('[data-tab="diff"]').classList.add('active');
         emptyState.style.display = '';
         statTotal.textContent = '—';
         statSame.textContent = '—';
