@@ -788,6 +788,7 @@
             <li><a href="#commands">Lệnh</a></li>
             <li><a href="#workflow">Workflow</a></li>
             <li><a href="#techstack">Công Nghệ</a></li>
+            <li><a href="#howtouse">📚 HDSD</a></li>
             <li><a href="test-ui.html" style="color:var(--accent);font-weight:600;">🧪 Test Tool</a></li>
             <li><a href="#guide" class="btn-nav">Bắt Đầu</a></li>
         </ul>
@@ -984,6 +985,99 @@
                     <span class="cmd">npm</span> run report
                 </div>
                 <div class="guide-tip">💡 Trong report, click vào test FAIL để xem ảnh diff với phần khác biệt được tô đỏ.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== HOW TO USE ==================== -->
+<section id="howtouse" style="background: rgba(255,255,255,0.015);">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">📚 Hướng Dẫn Sử Dụng</span>
+            <h2 class="section-title">Hai Cách Test Visual Regression</h2>
+            <p class="section-desc full">Dự án hỗ trợ 2 cách test: <strong>trên trình duyệt</strong> (không cài đặt) và <strong>trong terminal</strong> (dùng Playwright).</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <div class="guide-item reveal reveal-delay-1" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 32px;overflow:hidden;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <span style="font-size:2em;">🌐</span>
+                    <div>
+                        <h3 style="font-size:1.15em;">Test Trên Trình Duyệt</h3>
+                        <p style="color:var(--text-muted);font-size:0.85em;">Không cần cài đặt, chạy trực tiếp</p>
+                    </div>
+                </div>
+                <ol style="color:var(--text-muted);font-size:0.9em;line-height:2;list-style-position:inside;padding-left:0;">
+                    <li>Click <strong style="color:var(--text);">🧪 Test Tool</strong> trên navbar</li>
+                    <li><strong style="color:var(--text);">Kéo thả</strong> hoặc click chọn 2 ảnh (Expected / Actual)</li>
+                    <li>Điều chỉnh <strong style="color:var(--text);">Threshold</strong> và <strong style="color:var(--text);">Diff Color</strong></li>
+                    <li>Nhấn <strong style="color:var(--text);">🔍 So Sánh</strong> — xem kết quả ngay lập tức</li>
+                    <li>Chuyển qua các tab <strong style="color:var(--text);">🔬 Diff / 🔄 Slider / 👁️ Blink</strong></li>
+                    <li>Dùng <strong style="color:var(--text);">📱 Viewport</strong> để thay đổi kích thước hiển thị</li>
+                    <li>Nhấn <strong style="color:var(--text);">💾 Tải Diff</strong> để tải ảnh kết quả</li>
+                    <li>So sánh từ <strong style="color:var(--text);">URL</strong>: nhập URL → chụp ảnh tự động</li>
+                    <li>Dùng <strong style="color:var(--text);">📂 Batch Compare</strong> để so sánh nhiều cặp</li>
+                    <li>Lịch sử tự động lưu trong <strong style="color:var(--text);">📜 Lịch Sử</strong></li>
+                </ol>
+                <a href="test-ui.html" class="btn btn-primary" style="margin-top:16px;width:100%;justify-content:center;">🧪 Mở Test Tool</a>
+            </div>
+
+            <div class="guide-item reveal reveal-delay-2" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 32px;overflow:hidden;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <span style="font-size:2em;">💻</span>
+                    <div>
+                        <h3 style="font-size:1.15em;">Test Trong Terminal</h3>
+                        <p style="color:var(--text-muted);font-size:0.85em;">Dùng Playwright, chạy qua VS Code</p>
+                    </div>
+                </div>
+                <ol style="color:var(--text-muted);font-size:0.9em;line-height:2;list-style-position:inside;padding-left:0;">
+                    <li><strong style="color:var(--text);">So sánh ảnh:</strong> Đặt ảnh vào <code style="font-family:'Fira Code',monospace;color:var(--accent);">images/expected/</code> và <code style="font-family:'Fira Code',monospace;color:var(--accent);">images/actual/</code></li>
+                    <li>Chạy: <code style="font-family:'Fira Code',monospace;color:var(--accent);">npm run test:compare-images</code></li>
+                    <li><strong style="color:var(--text);">So sánh website:</strong> Sửa URL trong <code style="font-family:'Fira Code',monospace;color:var(--accent);">tests/compare-websites.spec.js</code></li>
+                    <li>Chạy: <code style="font-family:'Fira Code',monospace;color:var(--accent);">npm run test:compare-websites</code></li>
+                    <li><strong style="color:var(--text);">Snapshot testing:</strong> Chạy <code style="font-family:'Fira Code',monospace;color:var(--accent);">npm run test:visual</code></li>
+                    <li><strong style="color:var(--text);">Test demo:</strong> Chạy <code style="font-family:'Fira Code',monospace;color:var(--accent);">npx playwright test demo.spec.js</code></li>
+                    <li><strong style="color:var(--text);">Chạy tất cả:</strong> <code style="font-family:'Fira Code',monospace;color:var(--accent);">npm test</code></li>
+                    <li><strong style="color:var(--text);">Cập nhật snapshot:</strong> <code style="font-family:'Fira Code',monospace;color:var(--accent);">npx playwright test --update-snapshots</code></li>
+                    <li><strong style="color:var(--text);">Xem report:</strong> <code style="font-family:'Fira Code',monospace;color:var(--accent);">npm run report</code></li>
+                    <li><strong style="color:var(--text);">Debug:</strong> <code style="font-family:'Fira Code',monospace;color:var(--accent);">npm run test:debug</code> hoặc <code style="font-family:'Fira Code',monospace;color:var(--accent);">npm run test:ui</code></li>
+                </ol>
+                <div style="margin-top:16px;padding:10px 16px;background:rgba(245,158,11,0.08);border-left:3px solid var(--warning);border-radius:6px;font-size:0.85em;color:var(--text-muted);">
+                    💡 Kết quả diff tự động lưu trong <code style="font-family:'Fira Code',monospace;color:var(--accent);">images/diff/</code> và <code style="font-family:'Fira Code',monospace;color:var(--accent);">playwright-report/</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-item reveal" style="margin-top:24px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 32px;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <span style="font-size:2em;">📋</span>
+                <div>
+                    <h3 style="font-size:1.15em;">Quy Trình Làm Việc Chuẩn</h3>
+                    <p style="color:var(--text-muted);font-size:0.85em;">Step-by-step cho Visual Regression Testing</p>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+                <div style="padding:16px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center;">
+                    <span style="font-size:1.5em;display:block;margin-bottom:4px;">1️⃣</span>
+                    <strong style="font-size:0.9em;">Chuẩn bị ảnh gốc</strong>
+                    <p style="font-size:0.8em;color:var(--text-muted);margin-top:4px;">Chụp ảnh màn hình phiên bản chuẩn</p>
+                </div>
+                <div style="padding:16px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center;">
+                    <span style="font-size:1.5em;display:block;margin-bottom:4px;">2️⃣</span>
+                    <strong style="font-size:0.9em;">Lấy ảnh thực tế</strong>
+                    <p style="font-size:0.8em;color:var(--text-muted);margin-top:4px;">Chụp lại sau khi thay đổi code</p>
+                </div>
+                <div style="padding:16px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center;">
+                    <span style="font-size:1.5em;display:block;margin-bottom:4px;">3️⃣</span>
+                    <strong style="font-size:0.9em;">So sánh pixel</strong>
+                    <p style="font-size:0.8em;color:var(--text-muted);margin-top:4px;">Dùng pixelmatch để phát hiện khác biệt</p>
+                </div>
+                <div style="padding:16px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center;">
+                    <span style="font-size:1.5em;display:block;margin-bottom:4px;">4️⃣</span>
+                    <strong style="font-size:0.9em;">Xem & xử lý</strong>
+                    <p style="font-size:0.8em;color:var(--text-muted);margin-top:4px;">Kiểm tra diff, fix lỗi hoặc cập nhật snapshot</p>
+                </div>
             </div>
         </div>
     </div>
@@ -1201,6 +1295,8 @@
             <a href="#commands">Lệnh</a>
             <a href="#workflow">Workflow</a>
             <a href="#techstack">Công Nghệ</a>
+            <a href="#howtouse">📚 HDSD</a>
+            <a href="test-ui.html">🧪 Test Tool</a>
         </div>
         <p>🎯 Dự án minh họa Visual Regression Testing với Playwright + pixelmatch + pngjs</p>
         <p style="margin-top:4px;">⚡ Chạy <code style="color:var(--accent);">npm run server</code> để serve trang này</p>

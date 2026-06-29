@@ -869,12 +869,45 @@
     </div>
 
     <!-- ─── Terminal Guide ─── -->
-    <div class="guide-bar" style="margin-bottom:40px;">
+    <div class="guide-bar" style="margin-bottom:24px;">
         <span class="icon">💻</span>
         <div class="text">
             <strong>Cũng có thể test trong terminal:</strong>
             Đặt ảnh vào <code>images/expected/</code> và <code>images/actual/</code> rồi chạy
             <code id="cmdCopy">npm run test:compare-images</code>
+        </div>
+    </div>
+
+    <!-- ─── Quick Help ─── -->
+    <div class="result-section" style="margin-bottom:40px;padding:24px 28px;">
+        <div class="reveal" style="opacity:1;">
+            <h3 style="font-size:1.05em;margin-bottom:12px;">📚 Hướng Dẫn Nhanh</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:0.85em;color:var(--text-muted);">
+                <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+                    <strong style="color:var(--text);display:block;margin-bottom:4px;">📸 Upload ảnh</strong>
+                    Kéo thả hoặc click chọn Expected (gốc) và Actual (cần test)
+                </div>
+                <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+                    <strong style="color:var(--text);display:block;margin-bottom:4px;">⚙️ Tuỳ chỉnh</strong>
+                    Threshold (độ nhạy), Diff Color, Viewport size
+                </div>
+                <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+                    <strong style="color:var(--text);display:block;margin-bottom:4px;">🔬 Xem kết quả</strong>
+                    Diff (pixel khác), Slider (lướt so sánh), Blink (nhấp nháy)
+                </div>
+                <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+                    <strong style="color:var(--text);display:block;margin-bottom:4px;">🌐 So sánh URL</strong>
+                    Nhập URL → chụp ảnh tự động → so sánh với ảnh upload
+                </div>
+                <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+                    <strong style="color:var(--text);display:block;margin-bottom:4px;">📂 Batch</strong>
+                    So sánh nhiều cặp ảnh cùng lúc, xem kết quả tổng hợp
+                </div>
+                <div style="padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;">
+                    <strong style="color:var(--text);display:block;margin-bottom:4px;">📜 Lịch sử</strong>
+                    Tự động lưu 50 lần so sánh gần nhất, xem lại bất kỳ lúc nào
+                </div>
+            </div>
         </div>
     </div>
 </div>
