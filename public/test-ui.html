@@ -630,10 +630,23 @@
         <div class="result-tabs" id="resultTabs" style="display:none">
             <button class="active" data-tab="diff">🔬 Diff</button>
             <button data-tab="slider">🔄 Slider</button>
+            <button data-tab="blink">👁️ Blink</button>
         </div>
         <div class="result-canvas-wrap">
             <div class="result-tab-content active" id="tabDiff">
                 <canvas id="diffCanvas" style="display:none"></canvas>
+            </div>
+            <div class="result-tab-content" id="tabBlink" style="flex-direction:column;align-items:center;gap:12px;">
+                <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#0b1120;position:relative;max-width:100%;">
+                    <img id="blinkImg" style="display:block;max-width:100%;height:auto;" alt="Blink Compare">
+                    <span id="blinkLabel" style="position:absolute;bottom:8px;left:8px;padding:2px 10px;border-radius:4px;font-size:0.75em;font-weight:600;background:rgba(0,0,0,0.6);color:white;">📸 Expected</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn btn-secondary btn-sm" id="btnBlinkToggle">▶️ Bật Blink</button>
+                    <span style="font-size:0.85em;color:var(--text-muted);">Tốc độ:</span>
+                    <input type="range" id="blinkSpeed" min="100" max="1500" step="100" value="500" style="width:100px;">
+                    <span class="threshold-value" id="blinkSpeedDisplay">500ms</span>
+                </div>
             </div>
             <div class="result-tab-content" id="tabSlider">
                 <div class="slider-compare" id="sliderCompare">
@@ -694,10 +707,67 @@
     const sliderOverlay = document.getElementById('sliderOverlay');
     const sliderOverlayImg = document.getElementById('sliderOverlayImg');
 
+    const blinkImg = document.getElementById('blinkImg');
+    const blinkLabel = document.getElementById('blinkLabel');
+    const btnBlinkToggle = document.getElementById('btnBlinkToggle');
+    const blinkSpeed = document.getElementById('blinkSpeed');
+    const blinkSpeedDisplay = document.getElementById('blinkSpeedDisplay');
+    let blinkInterval = null;
+    let blinkShowing = true;
+
     // ─── Threshold ───
     thresholdSlider.addEventListener('input', () => {
         thresholdDisplay.textContent = parseFloat(thresholdSlider.value).toFixed(2);
         if (resultShown) runComparison();
+    });
+
+    // ─── Blink compare ───
+    function initBlink() {
+        if (!imgData.expected || !imgData.actual) return;
+        blinkImg.src = previewExpected.src;
+        blinkShowing = true;
+        blinkLabel.textContent = '📸 Expected';
+    }
+    function toggleBlink() {
+        if (blinkInterval) {
+            clearInterval(blinkInterval);
+            blinkInterval = null;
+            btnBlinkToggle.textContent = '▶️ Bật Blink';
+            blinkImg.src = previewExpected.src;
+            blinkShowing = true;
+            blinkLabel.textContent = '📸 Expected';
+            btnBlinkToggle.classList.remove('btn-danger');
+            return;
+        }
+        btnBlinkToggle.textContent = '⏹️ Dừng Blink';
+        btnBlinkToggle.classList.add('btn-danger');
+        blinkInterval = setInterval(() => {
+            blinkShowing = !blinkShowing;
+            if (blinkShowing) {
+                blinkImg.src = previewExpected.src;
+                blinkLabel.textContent = '📸 Expected';
+            } else {
+                blinkImg.src = previewActual.src;
+                blinkLabel.textContent = '🔍 Actual';
+            }
+        }, parseInt(blinkSpeed.value));
+    }
+    btnBlinkToggle.addEventListener('click', toggleBlink);
+    blinkSpeed.addEventListener('input', () => {
+        blinkSpeedDisplay.textContent = blinkSpeed.value + 'ms';
+        if (blinkInterval) {
+            clearInterval(blinkInterval);
+            blinkInterval = setInterval(() => {
+                blinkShowing = !blinkShowing;
+                if (blinkShowing) {
+                    blinkImg.src = previewExpected.src;
+                    blinkLabel.textContent = '📸 Expected';
+                } else {
+                    blinkImg.src = previewActual.src;
+                    blinkLabel.textContent = '🔍 Actual';
+                }
+            }, parseInt(blinkSpeed.value));
+        }
     });
 
     // ─── Result tabs ───
@@ -846,6 +916,7 @@
 
         document.getElementById('resultTabs').style.display = 'flex';
         initSlider();
+        initBlink();
         resultShown = true;
         btnDownload.disabled = false;
         btnReset.disabled = false;
@@ -874,6 +945,9 @@
         btnCompare.disabled = true;
         btnDownload.disabled = true;
         btnReset.disabled = true;
+        if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null; }
+        btnBlinkToggle.textContent = '▶️ Bật Blink';
+        btnBlinkToggle.classList.remove('btn-danger');
         diffCanvas.style.display = 'none';
         sliderCompare.style.display = 'none';
         sliderActive = false;
